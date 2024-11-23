@@ -9,3 +9,4 @@ npm init playwright@latest
 npm i ts-node -D
 npx playwright install
 npm install -g typescript
+npm i --save-dev @types/node
