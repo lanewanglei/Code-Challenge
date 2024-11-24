@@ -1,4 +1,5 @@
-import { test, expect} from '@playwright/test';
+import { test, expect } from '@playwright/test';
+
 
 interface Ifestival {
     name?: string
@@ -11,11 +12,29 @@ interface Ifestival {
   }
 
 test ( 'Get festivals', async ({request}) => {
-
-    const response = await request.get('https://eacp.energyaustralia.com.au/codingtest/api/v1/festivals');
-
-    expect (response.status()).toBe(200);
+ 
+    let response = await request.get('https://eacp.energyaustralia.com.au/codingtest/api/v1/festivals');
+    
     console.log('status:' + response.status());
+    let retryAfter:number
+
+    if(response.status() === 429){
+      const headers = response.headers();
+      console.log('retryAfter header:' + headers["Retry-After"]);
+      if ( typeof headers["Retry-After"] === "undefined" ){
+        retryAfter = 20000
+      }else{
+        retryAfter= +headers["Retry-After"];
+      }
+     
+      console.log('do retry after:' + retryAfter);
+      await new Promise(resolve => setTimeout(resolve, retryAfter));
+      response = await request.get('https://eacp.energyaustralia.com.au/codingtest/api/v1/festivals');
+    }
+  
+    console.log('status:' + response.status());
+    expect (response.status()).toBe(200);
+    
     let text : String = await response.text();
 
     expect(text).toContain('LOL-palooza');
@@ -25,6 +44,7 @@ test ( 'Get festivals', async ({request}) => {
 
 
     await response.json().then((festivals: Ifestival[]) => {
+      
         console.log("festivals:" + festivals);
         var names = ["Trainerella", "Twisted Tour", "LOL-palooza", "Small Night In"]; 
 
@@ -50,6 +70,9 @@ test ( 'Get festivals', async ({request}) => {
           }); 
       
         });
+
+
     
+      
 
 })
